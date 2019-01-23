@@ -26,6 +26,28 @@ class Vertex
    return this._z; 
   }
   
+}
+
+class AstroidGenerator
+{
+  
+  
+}
+
+class Astroid
+{
+  private ArrayList<Vertex> _vertexList;
+  private ArrayList<Vertex> _UVList;
+  private int[] triangels;
+  
+  private AstroidGenerator _generator;
+  public Astroid(AstroidGenerator generator)
+  {
+    _generator = generator; 
+    
+  }
+  
+  
   
   
 }
