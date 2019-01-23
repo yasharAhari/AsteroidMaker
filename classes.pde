@@ -30,6 +30,20 @@ class Vertex
 
 class AstroidGenerator
 {
+  private float size;
+  private ArrayList<Vertex> _vertexes;
+  private AstroidGenerator(float size)
+  {
+    this.size = size;
+    _vertexes = new ArrayList<Vertex>();
+    
+  }
+  
+  private AstroidGenerator()
+  {
+    this.size = random(50,1500);
+    _vertexes = new ArrayList<Vertex>();
+  }
   
   
 }
@@ -44,7 +58,29 @@ class Astroid
   public Astroid(AstroidGenerator generator)
   {
     _generator = generator; 
+    _vertexList = new ArrayList<Vertex>();
+    _UVList = new ArrayList<Vertex>();
     
+  }
+  
+  public void generate()
+  {
+      
+  }
+  
+  public void addVertex(Vertex _v)
+  {
+   _vertexList.add(_v); 
+    
+  }
+  
+  public void drawVertexes()
+  {
+   for(Vertex vertex : _vertexList)
+   {
+    point(vertex.getX(),vertex.getY(),vertex.getZ()); 
+     
+   }
   }
   
   
