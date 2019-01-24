@@ -1,3 +1,9 @@
+/**
+  The class Vertex is same as Vector3 in Unity, hold the coordinate in 3D.
+
+
+
+*/
 class Vertex
 {
  private float _x;
@@ -28,34 +34,77 @@ class Vertex
   
 }
 
-class AstroidGenerator
+/**
+  The asteroid Generator is a class that randomly generates data for asteroids.
+
+
+*/
+class AsteroidGenerator
 {
   private float size;
   private ArrayList<Vertex> _vertexes;
-  private AstroidGenerator(float size)
+  private AsteroidGenerator(float size)
   {
     this.size = size;
     _vertexes = new ArrayList<Vertex>();
     
   }
   
-  private AstroidGenerator()
+  private AsteroidGenerator()
   {
     this.size = random(50,1500);
     _vertexes = new ArrayList<Vertex>();
   }
   
   
+  private Vertex getCoordinates(float theta, float phi, float radius)
+  {
+   float x = radius * sin(theta) * cos(phi);
+   float y = radius * sin(theta) * sin(phi);
+   float z = radius * cos(theta);
+   Vertex v = new Vertex(x,y,z);
+   return v;
+    
+    
+  }
+  
+  public void generate()
+  {
+    float radius = this.size;
+    for(float phi = 0 ; phi <= 360 ; phi = phi + 0.5)
+    {
+     for(float theta = 0 ; theta <= 180 ; theta = theta + 0.5)
+     {
+       Vertex v = getCoordinates(theta,phi,radius);
+       _vertexes.add(v);
+       
+       
+     }
+      
+    }
+    
+    
+    
+  }
+  
+  
+  public ArrayList<Vertex> getVertexes()
+  {
+   return this._vertexes; 
+    
+  }
+  
+  
 }
 
-class Astroid
+class Asteroid
 {
   private ArrayList<Vertex> _vertexList;
   private ArrayList<Vertex> _UVList;
   private int[] triangels;
   
-  private AstroidGenerator _generator;
-  public Astroid(AstroidGenerator generator)
+  private AsteroidGenerator _generator;
+  public Asteroid(AsteroidGenerator generator)
   {
     _generator = generator; 
     _vertexList = new ArrayList<Vertex>();
@@ -65,6 +114,8 @@ class Astroid
   
   public void generate()
   {
+    _generator.generate();
+    _vertexList = _generator.getVertexes();
       
   }
   
