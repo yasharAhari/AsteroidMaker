@@ -1,14 +1,19 @@
+import peasy.*;
+
+PeasyCam camera;
+AsteroidGenerator g;
+Asteroid a ;
+
 
 
 void setup(){
- size(1000,800,P3D);
+ size(1000,500,P3D);
+camera = new PeasyCam(this, 0, 0, 0, 50);
  //test 1;
- AsteroidGenerator g = new AsteroidGenerator(50);
- Asteroid a = new Asteroid(g);
+  g = new AsteroidGenerator(1000,10);
+  a = new Asteroid(g);
  a.generate();
- a.drawVertexes();
-  
-  
+ 
 }
 
 
@@ -17,7 +22,8 @@ void setup(){
 
 void draw()
 {
-  
+   background(255);
+ a.drawVertexes();
   
   
 }

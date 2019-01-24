@@ -9,12 +9,14 @@ class Vertex
  private float _x;
  private float _y;
  private float _z;
+ private float _radius;
  
- public Vertex(float x,float y,float z)
+ public Vertex(float x,float y,float z,float radius)
  {
   _x = x;
   _y = y;
   _z = z;
+  _radius = radius;
  }
   
   public float getX()
@@ -32,6 +34,11 @@ class Vertex
    return this._z; 
   }
   
+  public float getRadius()
+  {
+   return _radius; 
+  }
+  
 }
 
 /**
@@ -43,26 +50,31 @@ class AsteroidGenerator
 {
   private float size;
   private ArrayList<Vertex> _vertexes;
-  private AsteroidGenerator(float size)
+  private float noiseLevel;
+  private AsteroidGenerator(float size , float noiseLevel)
   {
     this.size = size;
+    this.noiseLevel = noiseLevel;
     _vertexes = new ArrayList<Vertex>();
     
   }
   
-  private AsteroidGenerator()
+  private AsteroidGenerator(float noiseLevel)
   {
     this.size = random(50,1500);
+    this.noiseLevel = noiseLevel;
     _vertexes = new ArrayList<Vertex>();
   }
   
   
   private Vertex getCoordinates(float theta, float phi, float radius)
   {
+    theta = theta * PI/180;
+    phi = phi * PI/180;
    float x = radius * sin(theta) * cos(phi);
    float y = radius * sin(theta) * sin(phi);
    float z = radius * cos(theta);
-   Vertex v = new Vertex(x,y,z);
+   Vertex v = new Vertex(x,y,z,radius);
    return v;
     
     
@@ -70,17 +82,42 @@ class AsteroidGenerator
   
   public void generate()
   {
-    float radius = this.size;
-    for(float phi = 0 ; phi <= 360 ; phi = phi + 0.5)
+    
+    float radius = random(3*size/4,size);
+    float initial_radius = radius;
+    boolean first_run_flag_theta = true;
+    boolean first_run_flag_phi = true;
+    float radius_side_theta = 0;
+    float radius_side_phi = 0;
+    for(float phi = 0 ; phi <= 360 ; phi = phi + 2)
     {
-     for(float theta = 0 ; theta <= 180 ; theta = theta + 0.5)
+      int theta_vertex_count = 0;
+     for(float theta = 0 ; theta <= 180 ; theta = theta + 2)
      {
+       if(!first_run_flag_theta)
+       {
+         Vertex side_vertex_theta = _vertexes.get(_vertexes.size() - 1);
+          radius_side_theta = side_vertex_theta.getRadius();
+         if(!first_run_flag_phi)
+         {
+           Vertex side_vertex_phi = _vertexes.get(_vertexes.size() - theta_vertex_count - 1);
+           radius_side_phi = side_vertex_phi.getRadius(); 
+         }
+         else
+         {
+           radius_side_phi = initial_radius;
+         }
+         float median_radius = (radius_side_theta + radius_side_phi) / 2;
+         radius = random(median_radius - noiseLevel, median_radius + noiseLevel); 
+       }
+       
        Vertex v = getCoordinates(theta,phi,radius);
        _vertexes.add(v);
+       ++theta_vertex_count;
        
-       
-     }
-      
+       first_run_flag_theta = false;
+      } 
+      first_run_flag_phi = false;
     }
     
     
@@ -127,11 +164,21 @@ class Asteroid
   
   public void drawVertexes()
   {
+    beginShape(POINTS);
+    Vertex oldVertex = null;
    for(Vertex vertex : _vertexList)
    {
-    point(vertex.getX(),vertex.getY(),vertex.getZ()); 
+     vertex(vertex.getX(),vertex.getY(),vertex.getZ());
+     
+     if(oldVertex != null)
+     {
+      line(oldVertex.getX(),oldVertex.getY(),oldVertex.getZ(),vertex.getX(),vertex.getY(),vertex.getZ()); 
+       
+     }
+     oldVertex = vertex;
      
    }
+   endShape();
   }
   
   
