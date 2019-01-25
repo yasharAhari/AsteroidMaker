@@ -51,18 +51,21 @@ class AsteroidGenerator
   private float size;
   private ArrayList<Vertex> _vertexes;
   private float noiseLevel;
-  private AsteroidGenerator(float size , float noiseLevel)
+  private int variety_points; 
+  private AsteroidGenerator(float size , float noiseLevel,int variety_points)
   {
     this.size = size;
     this.noiseLevel = noiseLevel;
+    this.variety_points = variety_points;
     _vertexes = new ArrayList<Vertex>();
     
   }
   
-  private AsteroidGenerator(float noiseLevel)
+  private AsteroidGenerator(float noiseLevel,int variety_points)
   {
     this.size = random(50,1500);
     this.noiseLevel = noiseLevel;
+    this.variety_points = variety_points;
     _vertexes = new ArrayList<Vertex>();
   }
   
@@ -82,42 +85,114 @@ class AsteroidGenerator
   
   public void generate()
   {
+    // first, create and populate the variety array
     
+    float[] variety = new float[variety_points];
+    for(int index = 0 ; index < variety_points; ++index)
+    {
+      variety[index] = random(-2,2);
+      
+    }
+    
+    // create the initial radius
     float radius = random(3*size/4,size);
     float initial_radius = radius;
+    
+    // North polar radius is the radius that the theta swipe starts, we need to keep that so the other theta swipes start from that radius too.
+    float nort_polar_radius = radius;
+    // The south polar radius should be same but it is the radius that theta swipe ends. It will determined after first theta run.
+    float south_polar_radius = 0;
+    
     boolean first_run_flag_theta = true;
     boolean first_run_flag_phi = true;
     float radius_side_theta = 0;
     float radius_side_phi = 0;
-    for(float phi = 0 ; phi <= 360 ; phi = phi + 2)
+    int theta_vertex_total_count = 0;
+    int total_vertex_inserted = 0;
+    
+    for(float phi = 0 ; phi <= 360; phi = phi + 5)
     {
       int theta_vertex_count = 0;
-     for(float theta = 0 ; theta <= 180 ; theta = theta + 2)
+     for(float theta = 0 ; theta <= 180 ; theta = theta + 5)
      {
+       
+       
+       // the control block that controls the build 
        if(!first_run_flag_theta)
        {
+         
          Vertex side_vertex_theta = _vertexes.get(_vertexes.size() - 1);
-          radius_side_theta = side_vertex_theta.getRadius();
+         radius_side_theta = side_vertex_theta.getRadius();
+          
+          
          if(!first_run_flag_phi)
          {
-           Vertex side_vertex_phi = _vertexes.get(_vertexes.size() - theta_vertex_count - 1);
+           println("get the phi");
+           Vertex side_vertex_phi = _vertexes.get(total_vertex_inserted - theta_vertex_total_count);
            radius_side_phi = side_vertex_phi.getRadius(); 
          }
          else
          {
            radius_side_phi = initial_radius;
          }
-         float median_radius = (radius_side_theta + radius_side_phi) / 2;
-         radius = random(median_radius - noiseLevel, median_radius + noiseLevel); 
+         
+         //float median_radius = (radius_side_theta + radius_side_phi) / 2;
+         
+         float median_radius = radius_side_phi;
+         
+         if(theta > 100 && !first_run_flag_phi)
+         {
+          median_radius = (median_radius + south_polar_radius)/2; 
+         }
+         
+         if( theta_vertex_count == 0)
+         {
+           radius = nort_polar_radius; 
+         }
+         else if(theta_vertex_count == 180)
+         {
+           radius = south_polar_radius;
+         }
+         else
+         {
+           if(!first_run_flag_phi)
+           {
+             radius = random(median_radius - noiseLevel, median_radius + noiseLevel);
+             
+             //radius = radius_side_phi;
+           }
+           else
+           {
+             int current_variety_index = (int) map(theta,0,180,0,variety_points-1);
+             radius = radius +( variety[current_variety_index] * random(noiseLevel));
+           }
+         }
        }
        
+       
+       
+       
+       //--------------------building the point clusters
        Vertex v = getCoordinates(theta,phi,radius);
        _vertexes.add(v);
        ++theta_vertex_count;
+       ++total_vertex_inserted;
+       //-------------------------------------------
+       
+       
+       
        
        first_run_flag_theta = false;
-      } 
-      first_run_flag_phi = false;
+      }
+      
+      if (first_run_flag_phi)
+      {
+        // this means that the first theta swipe completed, it is the time to determine the south polar radius. 
+        south_polar_radius = radius;
+        first_run_flag_phi = false;
+        theta_vertex_total_count = theta_vertex_count;
+        println(theta_vertex_count);
+      }
     }
     
     
