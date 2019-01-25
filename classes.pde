@@ -52,21 +52,24 @@ class AsteroidGenerator
   private ArrayList<Vertex> _vertexes;
   private float noiseLevel;
   private int variety_points; 
-  private AsteroidGenerator(float size , float noiseLevel,int variety_points)
+  private float detail_level = 5;
+  private AsteroidGenerator(float size , float noiseLevel,int variety_points,float detail_level)
   {
     this.size = size;
     this.noiseLevel = noiseLevel;
     this.variety_points = variety_points;
-    _vertexes = new ArrayList<Vertex>();
+    this.detail_level = detail_level; 
+    //_vertexes = new ArrayList<Vertex>();
     
   }
   
-  private AsteroidGenerator(float noiseLevel,int variety_points)
+  private AsteroidGenerator(float noiseLevel,int variety_points,float detail_level)
   {
     this.size = random(50,1500);
     this.noiseLevel = noiseLevel;
     this.variety_points = variety_points;
-    _vertexes = new ArrayList<Vertex>();
+    this.detail_level = detail_level; 
+    //_vertexes = new ArrayList<Vertex>();
   }
   
   
@@ -85,6 +88,11 @@ class AsteroidGenerator
   
   public void generate()
   {
+    // first clear off the old vertexes... 
+     _vertexes = new ArrayList<Vertex>();
+    
+    
+    
     // first, create and populate the variety array
     
     float[] variety = new float[variety_points];
@@ -110,10 +118,10 @@ class AsteroidGenerator
     int theta_vertex_total_count = 0;
     int total_vertex_inserted = 0;
     
-    for(float phi = 0 ; phi <= 360; phi = phi + 5)
+    for(float phi = 0 ; phi <= 360; phi = phi + detail_level)
     {
       int theta_vertex_count = 0;
-     for(float theta = 0 ; theta <= 180 ; theta = theta + 5)
+     for(float theta = 0 ; theta <= 180 ; theta = theta + detail_level)
      {
        
        
@@ -127,7 +135,7 @@ class AsteroidGenerator
           
          if(!first_run_flag_phi)
          {
-           println("get the phi");
+           
            Vertex side_vertex_phi = _vertexes.get(total_vertex_inserted - theta_vertex_total_count);
            radius_side_phi = side_vertex_phi.getRadius(); 
          }
@@ -145,18 +153,27 @@ class AsteroidGenerator
           median_radius = (median_radius + south_polar_radius)/2; 
          }
          
+         if(phi > 5)
+         {
+           //////
+           Vertex v = _vertexes.get(theta_vertex_count);
+           median_radius = (median_radius + v.getRadius() )/2;
+         }
+         
          if( theta_vertex_count == 0)
          {
            radius = nort_polar_radius; 
-         }
-         else if(theta_vertex_count == 180)
-         {
-           radius = south_polar_radius;
          }
          else
          {
            if(!first_run_flag_phi)
            {
+             
+             if(theta_vertex_count >= theta_vertex_total_count - 2)
+             {
+               radius = south_polar_radius;
+             }
+             
              radius = random(median_radius - noiseLevel, median_radius + noiseLevel);
              
              //radius = radius_side_phi;
@@ -226,6 +243,7 @@ class Asteroid
   
   public void generate()
   {
+    _vertexList = new ArrayList<Vertex>();
     _generator.generate();
     _vertexList = _generator.getVertexes();
       
