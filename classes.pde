@@ -50,9 +50,14 @@ class AsteroidGenerator
 {
   private float size;
   private ArrayList<Vertex> _vertexes;
+  private ArrayList<Integer> _triangles;
   private float noiseLevel;
   private int variety_points; 
   private float detail_level = 5;
+  private int theta_swipe_count;
+  private int phi_swipe_count;
+  
+  
   private AsteroidGenerator(float size , float noiseLevel,int variety_points,float detail_level)
   {
     this.size = size;
@@ -73,6 +78,17 @@ class AsteroidGenerator
   }
   
   
+  /**
+    Gets the cartesian coordinates from the spherical coordinate variables and returns a Vertex object.      
+    
+    @param theta 
+    @param phi
+    @param radius
+    @return the cartesian Vertex from spherical coordinates. The radius of the vertex stays same as input. 
+  
+  
+  
+  */
   private Vertex getCoordinates(float theta, float phi, float radius)
   {
     theta = theta * PI/180;
@@ -90,8 +106,9 @@ class AsteroidGenerator
   {
     // first clear off the old vertexes... 
      _vertexes = new ArrayList<Vertex>();
-    
-    
+    phi_swipe_count = 0;
+    theta_swipe_count = 0;
+    ArrayList<Vertex> first_theta_swipe = new ArrayList<Vertex>();
     
     // first, create and populate the variety array
     
@@ -169,14 +186,17 @@ class AsteroidGenerator
            if(!first_run_flag_phi)
            {
              
-             if(theta_vertex_count >= theta_vertex_total_count - 2)
+             if(theta_vertex_count >= theta_vertex_total_count -1)
              {
                radius = south_polar_radius;
              }
+             else
+             {
              
-             radius = random(median_radius - noiseLevel, median_radius + noiseLevel);
-             
-             //radius = radius_side_phi;
+               radius = random(median_radius - noiseLevel, median_radius + noiseLevel);
+               
+               //radius = radius_side_phi;
+             }
            }
            else
            {
@@ -195,7 +215,11 @@ class AsteroidGenerator
        ++theta_vertex_count;
        ++total_vertex_inserted;
        //-------------------------------------------
-       
+       //saving the first thrta_swipe
+       if(first_run_flag_phi)
+       {
+         first_theta_swipe.add(v);
+       }
        
        
        
@@ -208,12 +232,23 @@ class AsteroidGenerator
         south_polar_radius = radius;
         first_run_flag_phi = false;
         theta_vertex_total_count = theta_vertex_count;
+        this.theta_swipe_count = theta_vertex_count; 
         println(theta_vertex_count);
       }
+      ++phi_swipe_count;
     }
     
+    //Fix the last Swipe which is changing the last Swipe with first swipe
+    int index_f = 0;
+    for(int index = _vertexes.size() - theta_vertex_total_count; index < _vertexes.size();++index)
+    {
+      _vertexes.set(index,first_theta_swipe.get(index_f));
+      ++index_f;
+      
+    }
     
-    
+    generateTriangles();
+    println("The number of triangles created: " + _triangles.size());
   }
   
   
@@ -224,13 +259,75 @@ class AsteroidGenerator
   }
   
   
+  public ArrayList<Integer> getTriangles()
+  {
+   return this._triangles; 
+    
+    
+  }
+  
+  
+  public void generateTriangles()
+  {
+    _triangles = new ArrayList<Integer>();
+    /*
+    phi_swipe_count = 0;
+    theta_swipe_count = 0;
+    */
+     for (int phi_index = 0 ; phi_index < phi_swipe_count -1 ;++phi_index)
+     {
+       for(int theta_index = 0 ; theta_index < theta_swipe_count -1; ++theta_index)
+       {
+         //on every iteration we deal with two triangles
+         
+         // adding triangle one:
+         /*
+         
+          1*------*2
+           |     /
+           |    /
+           |   / 
+           |  /
+           | /
+           |/ 
+           *3
+         */
+         _triangles.add(theta_index + (phi_index * theta_swipe_count));
+         _triangles.add(theta_index + (phi_index * theta_swipe_count) + 1);
+         _triangles.add(theta_index + ((phi_index + 1) * theta_swipe_count));
+         
+         
+         //adding triangle 2
+         /*
+                  *1
+                 /|
+                / | 
+               /  |
+              /   |
+             /    |
+            /     |
+          3*------*2       
+         */
+         _triangles.add(theta_index + (phi_index * theta_swipe_count) + 1);
+         _triangles.add(theta_index + ((phi_index + 1) * theta_swipe_count)+1);
+         _triangles.add(theta_index + ((phi_index + 1) * theta_swipe_count));
+         
+         
+       }
+       
+       
+       
+     }
+  }
+  
+  
 }
 
 class Asteroid
 {
   private ArrayList<Vertex> _vertexList;
   private ArrayList<Vertex> _UVList;
-  private int[] triangels;
+  private ArrayList<Integer> triangels;
   
   private AsteroidGenerator _generator;
   public Asteroid(AsteroidGenerator generator)
@@ -239,6 +336,7 @@ class Asteroid
     _vertexList = new ArrayList<Vertex>();
     _UVList = new ArrayList<Vertex>();
     
+    
   }
   
   public void generate()
@@ -246,7 +344,10 @@ class Asteroid
     _vertexList = new ArrayList<Vertex>();
     _generator.generate();
     _vertexList = _generator.getVertexes();
-      
+    triangels = new ArrayList<Integer>();
+    triangels = _generator.getTriangles();
+    
+    
   }
   
   public void addVertex(Vertex _v)
@@ -272,6 +373,28 @@ class Asteroid
      
    }
    endShape();
+  }
+  
+  public void drawAsteroid()
+  {
+    fill(#CBC9C9);
+    //noFill();
+    //stroke(#FF0000);
+   noStroke();
+   
+    for(int index = 0 ; index < triangels.size(); index+=3)
+    {
+       beginShape();
+       Vertex v1 = _vertexList.get(triangels.get(index));
+       Vertex v2 = _vertexList.get(triangels.get(index+1));
+       Vertex v3 = _vertexList.get(triangels.get(index+2));
+       vertex(v1.getX(),v1.getY(),v1.getZ());
+       vertex(v2.getX(),v2.getY(),v2.getZ());
+       vertex(v3.getX(),v3.getY(),v3.getZ());
+        endShape();
+    }
+   
+    
   }
   
   
